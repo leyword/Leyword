@@ -362,16 +362,6 @@ function Leyword.SyncGuild(force)
       PostChat(line)
     end
   end
-  local _, number = Leyword.AnswerFor(y, m, d)
-  for age = 1, 14 do
-    local py, pm, pd = Leyword.YmdFromNumber(number - age)
-    if py then
-      local entry = FinishedFor(Leyword.DateKey(py, pm, pd))
-      if entry then
-        Leyword.Enqueue(ResultMessage(entry), "GUILD")
-      end
-    end
-  end
 end
 
 function Leyword.RequestSync()
@@ -399,6 +389,10 @@ local function StoreResult(sender, ymd, score, won, pattern)
     return
   end
   local wonBit = won == "1"
+  if wonBit and scoreNum ~= rows then
+    RememberStatus(Leyword.NameKey(sender) .. " score dropped: " .. tostring(scoreNum) .. " does not match " .. tostring(rows) .. " rows")
+    return
+  end
   if wonBit and (not scoreNum or scoreNum < 1 or scoreNum > 6) then
     scoreNum = rows
   end
@@ -442,12 +436,6 @@ local function StoreResult(sender, ymd, score, won, pattern)
     bucket[key] = info
   end
   Write(ymd)
-  if ok and ty then
-    local age = Leyword.Rdn(ty, tm, td) - Leyword.Rdn(py, pm, pd)
-    if age >= -1 and age <= 1 then
-      Write(Leyword.DateKey(ty, tm, td))
-    end
-  end
   RememberStatus("Saved " .. key .. " " .. (wonBit and ((scoreNum or rows) .. "/6") or "X/6"))
   if Leyword.RefreshGuild then
     Leyword.RefreshGuild()

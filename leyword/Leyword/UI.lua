@@ -431,6 +431,13 @@ local function Build()
   frame:SetToplevel(true)
   frame:SetClampedToScreen(true)
   frame:SetMovable(true)
+  frame:SetResizable(true)
+  if frame.SetResizeBounds then
+    frame:SetResizeBounds(470, 640, 900, 980)
+  else
+    frame:SetMinResize(470, 640)
+    frame:SetMaxResize(900, 980)
+  end
   frame:EnableMouse(true)
   frame:RegisterForDrag("LeftButton")
   frame:SetScript("OnDragStart", frame.StartMoving)
@@ -438,6 +445,18 @@ local function Build()
     self:StopMovingOrSizing()
     local point, _, relativePoint, x, y = self:GetPoint(1)
     LeywordDB.settings.point = { point, relativePoint, x, y }
+  end)
+  local grip = CreateFrame("Button", nil, frame)
+  grip:SetSize(16, 16)
+  grip:SetPoint("BOTTOMRIGHT", -2, 2)
+  grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+  grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+  grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+  grip:SetScript("OnMouseDown", function()
+    frame:StartSizing("BOTTOMRIGHT")
+  end)
+  grip:SetScript("OnMouseUp", function()
+    frame:StopMovingOrSizing()
   end)
   local saved = LeywordDB.settings.point
   if type(saved) == "table" and saved[1] and saved[2] then
@@ -552,8 +571,8 @@ local function Build()
   local popup = CreateFrame("Frame", "LeywordFeedback", UIParent, "BasicFrameTemplateWithInset")
   popup:SetSize(360, 150)
   popup:SetPoint("CENTER")
-  popup:SetFrameStrata("DIALOG")
-  popup:SetFrameLevel(400)
+  popup:SetFrameStrata("FULLSCREEN_DIALOG")
+  popup:SetFrameLevel(1000)
   popup:SetToplevel(true)
   popup:Hide()
   if popup.TitleText then
@@ -582,8 +601,8 @@ local function Build()
   local thanksPopup = CreateFrame("Frame", "LeywordThanks", UIParent, "BasicFrameTemplateWithInset")
   thanksPopup:SetSize(260, 78 + #SUGGESTIONS * 18)
   thanksPopup:SetPoint("CENTER")
-  thanksPopup:SetFrameStrata("DIALOG")
-  thanksPopup:SetFrameLevel(400)
+  thanksPopup:SetFrameStrata("FULLSCREEN_DIALOG")
+  thanksPopup:SetFrameLevel(1000)
   thanksPopup:SetToplevel(true)
   thanksPopup:Hide()
   if thanksPopup.TitleText then
@@ -843,18 +862,32 @@ local function Build()
   feedback:SetScript("OnClick", function()
     edit:SetText("https://discord.gg/ShzNPC2ahn")
     edit:HighlightText()
-    edit:SetFocus()
     popup:Show()
+    popup:Raise()
+    edit:SetFocus()
     DEFAULT_CHAT_FRAME:AddMessage("|cffd4af37Leyword|r  #feedback: https://discord.gg/ShzNPC2ahn")
   end)
   closeFeedback:SetScript("OnClick", function()
     popup:Hide()
   end)
   thanks:SetScript("OnClick", function()
-    thanksPopup:SetShown(not thanksPopup:IsShown())
+    if thanksPopup:IsShown() then
+      thanksPopup:Hide()
+    else
+      thanksPopup:Show()
+      thanksPopup:Raise()
+    end
   end)
   closeThanks:SetScript("OnClick", function()
     thanksPopup:Hide()
+  end)
+  frame:HookScript("OnMouseDown", function()
+    if popup:IsShown() then
+      popup:Raise()
+    end
+    if thanksPopup:IsShown() then
+      thanksPopup:Raise()
+    end
   end)
   frame:HookScript("OnHide", function()
     popup:Hide()
@@ -889,6 +922,13 @@ local function Build()
     end
     if which == "past" then
       Leyword.RefreshHistory()
+    end
+    if which == "puzzle" and not Leyword.review then
+      C_Timer.After(0, function()
+        if Leyword.page == "puzzle" and not Leyword.review and box:IsVisible() and box:IsEnabled() then
+          box:SetFocus()
+        end
+      end)
     end
   end
   puzzleTab:SetScript("OnClick", function()
@@ -996,5 +1036,13 @@ function Leyword.Toggle()
     frame:Show()
     frame:Raise()
     Leyword.Refresh()
+    if (not Leyword.page or Leyword.page == "puzzle") and not Leyword.review and Leyword.frames.guessBox then
+      C_Timer.After(0, function()
+        local guess = Leyword.frames and Leyword.frames.guessBox
+        if guess and guess:IsVisible() and guess:IsEnabled() and not Leyword.review then
+          guess:SetFocus()
+        end
+      end)
+    end
   end
 end
