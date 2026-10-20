@@ -269,7 +269,8 @@ local function ResultMessage(cur)
   if not name or name == "" then
     name = MyName()
   end
-  name = Leyword.NameKey(name):gsub("[^%w ]", "")
+  name = Leyword.NameKey(name):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("|", ""):gsub("[%c]", "")
+  name = name:match("^%s*(.-)%s*$") or ""
   if name == "" then
     name = "Player"
   end
@@ -329,6 +330,9 @@ function Leyword.BroadcastResult()
   if Leyword.Enqueue(ResultMessage(cur), "GUILD") then
     cur.shared = true
   end
+  if LeywordDB.settings and LeywordDB.settings.quiet then
+    return
+  end
   local line = ScoreChat(cur)
   if line then
     PostChat(line)
@@ -356,12 +360,6 @@ function Leyword.SyncGuild(force)
   end
   local ping = todayEntry and ResultMessage(todayEntry) or ("1;Q;" .. todayKey .. ";" .. Leyword.AddonVersion())
   PingAddon(ping)
-  if force and todayEntry then
-    local line = ScoreChat(todayEntry)
-    if line then
-      PostChat(line)
-    end
-  end
 end
 
 function Leyword.RequestSync()
@@ -465,9 +463,20 @@ local function OnAddonMessage(_, message, distribution, sender)
     return
   end
   local who = Leyword.NameKey(sender)
-  local ymd, score, won, pattern, embedded = message:match("R(%d%d%d%d%d%d%d%d)S(%d+)W([01])P([GYB]+)N([%w ]+)")
+  local ymd, score, won, pattern, embedded = message:match("^R(%d%d%d%d%d%d%d%d)S(%d+)W([01])P([GYB]+)N(.*)$")
   if ymd then
-    StoreResult(embedded ~= "" and embedded or sender, ymd, score, won, pattern)
+    embedded = tostring(embedded or ""):match("^%s*(.-)%s*$") or ""
+    local real = who
+    local function fold(text)
+      return (tostring(text):gsub("[^%w ]", "")):lower()
+    end
+    local short, long = fold(embedded), fold(real)
+    if embedded == "" then
+      embedded = sender
+    elseif long ~= "" and short ~= long and long:sub(1, #short) == short and #real > #embedded then
+      embedded = real
+    end
+    StoreResult(embedded, ymd, score, won, pattern)
     return
   end
   local sep = message:find(";", 1, true) and ";" or "|"

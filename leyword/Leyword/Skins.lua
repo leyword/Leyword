@@ -71,6 +71,7 @@ function Leyword.ApplyBuiltinSkins()
         Try(skins.HandleCloseButton, skins, frames.main.CloseButton)
         Try(skins.HandleCheckBox, skins, frames.colorblind)
         Try(skins.HandleCheckBox, skins, frames.keyboard)
+        Try(skins.HandleCheckBox, skins, frames.quiet)
         Try(skins.HandleScrollBar, skins, _G.LeywordGuildScrollScrollBar)
       end
     end
@@ -95,6 +96,7 @@ function Leyword.ApplyBuiltinSkins()
       Try(T.SkinEditBox, frames.guessBox)
       Try(T.SkinCheckBox, frames.colorblind)
       Try(T.SkinCheckBox, frames.keyboard)
+      Try(T.SkinCheckBox, frames.quiet)
       Try(T.SkinCloseButton, frames.main.CloseButton)
     end
   end
@@ -166,6 +168,7 @@ function Leyword.ApplyEllesmere(skin)
   call("Button", frames.back)
   call("Checkbox", frames.colorblind)
   call("Checkbox", frames.keyboard)
+  call("Checkbox", frames.quiet)
   call("Tab", frames.puzzleTab)
   call("Tab", frames.guildTab)
   call("Tab", frames.pastTab)

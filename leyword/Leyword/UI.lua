@@ -231,6 +231,9 @@ function Leyword.Refresh()
     Leyword.ApplyKey(button, best[letter])
   end
   frames.colorblind:SetChecked(LeywordDB.settings.colorblind)
+  if frames.quiet then
+    frames.quiet:SetChecked(LeywordDB.settings.quiet and true or false)
+  end
   local showKeys = LeywordDB.settings.keyboard ~= false
   frames.keyboard:SetChecked(showKeys)
   frames.keypad:SetShown(showKeys and not reviewing)
@@ -337,16 +340,19 @@ function Leyword.RefreshGuild()
     AddBucket(LeywordDB.guild[cur.date])
   end
   local full = {}
+  local function Fold(name)
+    return (tostring(name):gsub("[^%w ]", "")):lower()
+  end
   for i = 1, #rows do
-    local first = rows[i].name:match("^(%S+) ")
+    local first = Fold(rows[i].name):match("^(%S+) ")
     if first then
-      full[first:lower()] = true
+      full[first] = true
     end
   end
   if next(full) then
     local kept = {}
     for i = 1, #rows do
-      local only = rows[i].name:match("^(%S+)$")
+      local only = Fold(rows[i].name):match("^(%S+)$")
       if not (only and full[only:lower()]) then
         kept[#kept + 1] = rows[i]
       end
@@ -367,7 +373,7 @@ function Leyword.RefreshGuild()
     frames.guildEmpty:SetText("")
   end
   if frames.guildStatus then
-    frames.guildStatus:SetText(Leyword.syncStatus or "Press Sync to ask in guild chat.")
+    frames.guildStatus:SetText(Leyword.syncStatus or "Press Sync to trade today's score.")
   end
   for i = 1, #frames.guildRows do
     local row = frames.guildRows[i]
@@ -727,6 +733,22 @@ local function Build()
   guildSync:SetSize(70, 22)
   guildSync:SetPoint("TOPRIGHT", -28, 0)
   guildSync:SetText("Sync")
+  local quiet = CreateFrame("CheckButton", "LeywordQuietCheck", guild, "UICheckButtonTemplate")
+  quiet:SetPoint("RIGHT", guildSync, "LEFT", -4, 0)
+  CheckText(quiet, "Quiet")
+  quiet:SetChecked(LeywordDB.settings.quiet and true or false)
+  quiet:SetScript("OnClick", function(self)
+    LeywordDB.settings.quiet = self:GetChecked() and true or false
+  end)
+  quiet:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetText("Quiet")
+    GameTooltip:AddLine("A solved puzzle is not posted in guild chat. Sync still shares the score.", 1, 1, 1, true)
+    GameTooltip:Show()
+  end)
+  quiet:SetScript("OnLeave", function()
+    GameTooltip:Hide()
+  end)
   guildSync:SetScript("OnClick", function()
     if not IsInGuild() then
       return
@@ -995,6 +1017,7 @@ local function Build()
     pastContent = pastContent,
     colorblind = colorblind,
     keyboard = keyboard,
+    quiet = quiet,
     status = status,
     stats = stats,
     result = result,

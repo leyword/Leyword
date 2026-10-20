@@ -4,6 +4,7 @@ local DEFAULTS = {
   settings = {
     colorblind = false,
     keyboard = true,
+    quiet = false,
     useUISkin = true,
     point = nil,
   },
